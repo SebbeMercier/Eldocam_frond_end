@@ -25,7 +25,7 @@ jobs:
         run: echo "FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GITHUB_PAT }}" | podman login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
       - name: Build image with Podman
         run: podman build -t ${{ env.FULL_IMAGE_NAME }} .
@@ -37,8 +37,8 @@ jobs:
         run: |
           IMAGE_URL="https://${{ env.REGISTRY }}/v2/${{ env.IMAGE_NAME }}/manifests/${{ github.sha }}"
           echo "Checking if image exists at: $IMAGE_URL"
-          # Utilisez le token GitHub pour vous authentifier
-          AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          # Utilisez le token personnel pour vous authentifier
+          AUTH_TOKEN=${{ secrets.GITHUB_PAT }}
           if curl -s -I -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $AUTH_TOKEN" "$IMAGE_URL" | grep -q "200"; then
             echo "Image successfully pushed to registry"
           else
