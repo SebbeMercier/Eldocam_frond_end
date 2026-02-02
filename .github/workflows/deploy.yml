@@ -32,7 +32,7 @@ jobs:
         run: podman push ${{ env.FULL_IMAGE_NAME }}
 
       - name: Setup Nomad
-        uses: hashicorp/setup-nomad@v2
+        uses: hashicorp/setup-nomad@v1
         with:
           version: "1.7.2"
 
