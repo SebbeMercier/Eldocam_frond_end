@@ -1,5 +1,5 @@
 # Eldocam Website - Front-End
-
+re
 This repository contains the front-end code for the Eldocam website, a company specializing in electrical systems, security, and home automation.  The site is multilingual, offering content in French, Dutch, and English.  It provides information about the company's services, contact details, and a presentation of their expertise.
 
 ## Folder Structure
