@@ -7,6 +7,9 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  NOMAD_TOKEN: ${{ secrets.NOMAD_TOKEN }}  # Si nécessaire
+  NOMAD_REGION: "us-east-1"               # Si nécessaire
+  NOMAD_NAMESPACE: "default"             # Si nécessaire
 
 jobs:
   build-and-deploy:
@@ -31,15 +34,16 @@ jobs:
       - name: Push image with Podman
         run: podman push ${{ env.FULL_IMAGE_NAME }}
 
-      - name: Setup Nomad
-        uses: hashicorp/setup-nomad@v1
-        with:
-          version: "1.7.2"
+      - name: Install Nomad CLI
+        run: |
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt-get update && sudo apt-get install -y nomad=1.7.2-1
 
       - name: Deploy to Nomad
         run: |
+          export NOMAD_ADDR=${{ secrets.NOMAD_ADDR }}
+          export NOMAD_TOKEN=${{ secrets.NOMAD_TOKEN }}  # Si nécessaire
           nomad job run \
             -var="image=${{ env.FULL_IMAGE_NAME }}" \
             eldocam.nomad.hcl
-        env:
-          NOMAD_ADDR: ${{ secrets.NOMAD_ADDR }}
