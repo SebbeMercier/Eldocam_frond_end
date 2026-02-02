@@ -45,7 +45,7 @@ job "eldocam" {
         memory = 128
       }
 
-      log {
+      logs {
         max_files     = 3
         max_file_size = 10
       }
