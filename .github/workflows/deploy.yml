@@ -7,9 +7,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  NOMAD_TOKEN: ${{ secrets.NOMAD_TOKEN }}  # Si nécessaire
-  NOMAD_REGION: "us-east-1"               # Si nécessaire
-  NOMAD_NAMESPACE: "default"             # Si nécessaire
+  NOMAD_REGION: "us-east-1"
+  NOMAD_NAMESPACE: "default"
 
 jobs:
   build-and-deploy:
@@ -34,16 +33,42 @@ jobs:
       - name: Push image with Podman
         run: podman push ${{ env.FULL_IMAGE_NAME }}
 
+      - name: Verify image exists in registry
+        run: |
+          if curl -s -I -o /dev/null -w "%{http_code}" "https://${{ env.REGISTRY }}/v2/${{ env.IMAGE_NAME }}/manifests/${{ github.sha }}" | grep -q "200"; then
+            echo "Image successfully pushed to registry"
+          else
+            echo "Image not found in registry"
+            exit 1
+          fi
+
       - name: Install Nomad CLI
         run: |
           curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
           sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
           sudo apt-get update && sudo apt-get install -y nomad=1.7.2-1
 
+      - name: Check Nomad connection
+        run: |
+          export NOMAD_ADDR=${{ secrets.NOMAD_ADDR }}
+          export NOMAD_TOKEN=${{ secrets.NOMAD_TOKEN }}
+          if nomad server members | grep -q "alive"; then
+            echo "Nomad server is reachable"
+          else
+            echo "Nomad server is NOT reachable"
+            exit 1
+          fi
+
       - name: Deploy to Nomad
         run: |
           export NOMAD_ADDR=${{ secrets.NOMAD_ADDR }}
-          export NOMAD_TOKEN=${{ secrets.NOMAD_TOKEN }}  # Si nécessaire
+          export NOMAD_TOKEN=${{ secrets.NOMAD_TOKEN }}
+          export NOMAD_REGION=${{ env.NOMAD_REGION }}
+          export NOMAD_NAMESPACE=${{ env.NOMAD_NAMESPACE }}
+
+          echo "Deploying job to Nomad..."
           nomad job run \
             -var="image=${{ env.FULL_IMAGE_NAME }}" \
             eldocam.nomad.hcl
+
+          echo "Job deployed successfully"
