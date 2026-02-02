@@ -1,0 +1,45 @@
+name: Deploy to Nomad (Podman)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Image Name
+        run: echo "FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_ENV
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Build image with Podman
+        run: podman build -t ${{ env.FULL_IMAGE_NAME }} .
+
+      - name: Push image with Podman
+        run: podman push ${{ env.FULL_IMAGE_NAME }}
+
+      - name: Setup Nomad
+        uses: hashicorp/setup-nomad@v2
+        with:
+          version: "1.7.2"
+
+      - name: Deploy to Nomad
+        run: |
+          nomad job run \
+            -var="image=${{ env.FULL_IMAGE_NAME }}" \
+            eldocam.nomad.hcl
+        env:
+          NOMAD_ADDR: ${{ secrets.NOMAD_ADDR }}
