@@ -1,1 +1,61 @@
-github svp a l'aide
+# Supprimer le Job et le HelmChart actuels
+kubectl delete job helm-install-traefik -n kube-system --ignore-not-found
+kubectl delete helmchart traefik -n kube-system
+
+# Attendre 10 secondes
+sleep 10
+
+# Créer le HelmChart avec la configuration corrigée
+kubectl apply -f - <<'EOF'
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  chart: https://%{KUBERNETES_API}%/static/charts/traefik-37.1.1+up37.1.0.tgz
+  failurePolicy: reinstall
+  valuesContent: |-
+    deployment:
+      podAnnotations:
+        prometheus.io/port: "8082"
+        prometheus.io/scrape: "true"
+    providers:
+      kubernetesIngress:
+        publishedService:
+          enabled: true
+    priorityClassName: "system-cluster-critical"
+    image:
+      repository: "rancher/mirrored-library-traefik"
+      tag: "3.5.1"
+    tolerations:
+    - key: "CriticalAddonsOnly"
+      operator: "Exists"
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+    service:
+      ipFamilyPolicy: "PreferDualStack"
+    ports:
+      web:
+        exposedPort: 80
+      websecure:
+        exposedPort: 443
+    additionalArguments:
+      - "--certificatesresolvers.letsencrypt.acme.email=sebbe@eldocam.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53"
+    env:
+      - name: CF_DNS_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: cloudflare-api-token
+            key: lp0wtp0wje3ZBn_1GbYksLUwH1TaOIqL6ryvpdRT
+    persistence:
+      enabled: true
+      name: data
+      size: 128Mi
+      path: /data
+EOF

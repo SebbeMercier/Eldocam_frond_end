@@ -1,13 +1,12 @@
-FROM nginx:alpine
+FROM nginx:1.25-alpine
 
-# Copier les fichiers statiques dans le répertoire par défaut de Nginx
+# Copier tous les fichiers statiques
 COPY . /usr/share/nginx/html
 
-# Exposer le port 80
+# Copier la config nginx (optionnel)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html
+
 EXPOSE 80
-
-# Configuration de Nginx pour la haute disponibilité
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Démarrer Nginx
-CMD ["nginx", "-g", "daemon off;"]

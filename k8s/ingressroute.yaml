@@ -1,0 +1,19 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: eldocam-frontend
+  namespace: eldocam
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+  - match: Host(`eldocam.com`)
+    kind: Rule
+    services:
+    - name: eldocam-frontend
+      port: 80
+  tls:
+    certResolver: letsencrypt
