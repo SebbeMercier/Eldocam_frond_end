@@ -1,47 +1,20 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: eldocam
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: eldocam-frontend
   namespace: eldocam
-  labels:
-    app: eldocam
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: eldocam
+      app: eldocam-frontend
   template:
     metadata:
       labels:
-        app: eldocam
+        app: eldocam-frontend
     spec:
       containers:
       - name: nginx
-        image: ghcr.io/sebbemercier/eldocam-frontend:latest
+        image: ghcr.io/sebbemercier/eldocam-frontend:latest  # ← Image de GitHub Actions
         ports:
         - containerPort: 80
-          name: http
-        resources:
-          limits:
-            memory: "64Mi"
-            cpu: "100m"
-          requests:
-            memory: "32Mi"
-            cpu: "50m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 3
-          periodSeconds: 5

@@ -1,16 +1,13 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: eldocam-frontend
+  name: eldocam-https
   namespace: eldocam
-  annotations:
-    kubernetes.io/ingress.class: traefik
 spec:
   entryPoints:
-    - web
     - websecure
   routes:
-  - match: Host(`eldocam.com`)
+  - match: Host(`eldocam.com`) || Host(`www.eldocam.com`) || Host(`eldocam.be`) || Host(`www.eldocam.be`)
     kind: Rule
     services:
     - name: eldocam-frontend
