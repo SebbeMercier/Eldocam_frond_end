@@ -4,13 +4,13 @@ metadata:
   name: eldocam-frontend
   namespace: eldocam
   labels:
-    app: eldocam
+    app: eldocam-frontend  # ← Cohérent partout
 spec:
   selector:
-    app: eldocam
+    app: eldocam-frontend  # ← CORRECTION ICI
   ports:
   - name: http
     port: 80
-    targetPort: 80
     protocol: TCP
+    targetPort: 80
   type: ClusterIP
